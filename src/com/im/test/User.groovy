@@ -52,9 +52,9 @@ class User {
         String group
         if (this.incomePerMonth <= 5000) {
             group = "MiddleClass"
-        } else if (incomePerMonth > 5000 && incomePerMonth <= 1000) {
-            group = "Higher MiddleClass"
-        } else if (incomePerMonth > 10000) {
+        } else if (this.incomePerMonth > 5000 && this.incomePerMonth <= 1000) {
+            group = "Lower MiddleClass"
+        } else if (this.incomePerMonth > 10000) {
             group = "Higher MiddleClass"
         }
         return group
