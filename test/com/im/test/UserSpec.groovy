@@ -1,18 +1,22 @@
 package com.im.test
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class UserSpec extends Specification {
 
     def "First test"() {
-\
         given:
-        User user = new User(firstName: "Surbhi", lastName: "Dhawan")
+        User user = new User(firstName: fname, lastName: lname)
 
         expect:
-        user.getFullName() == "Surbhi Dhawan"
-    }
+        user.getFullName() == fname + " " + lname
 
+        where:
+        fname     | lname
+        "Saksham" | "Sharma"
+        "Nitin"   | "Singh"
+    }
 
     def "display full name"() {
 
@@ -21,14 +25,14 @@ class UserSpec extends Specification {
 
         and:
         user.gender = g
-        expect:
-        user.displayName() == "Mrnitin singh"
 
+        expect:
+        user.displayName() == result
 
         where:
-        fname   | lname   | g
-        "nitin" | "singh" | 'Male'
-//     "Surbhi" | "Dhawan" |'Female'
+        fname    | lname    | g        | result
+        "nitin"  | "singh"  | 'Male'   | "Mrnitin singh"
+        "Surbhi" | "Dhawan" | 'Female' | "MsSurbhi Dhawan"
     }
 
     def "valid password"() {
@@ -36,94 +40,80 @@ class UserSpec extends Specification {
         given:
         User user = new User()
 
-        and:
-        user.password = "saksham7171"
+        expect:
+        user.isValidPassword(pwd) == result
 
-       expect:
-       user.isValidPassword(user.password)==true
+        where:
+        pwd           | result
+        ""            | false
+        "saksham"     | false
+        "saksham7171" | true
+
     }
 
     def "reset password"() {
 
         given: "a user"
-
-        User user = new User(password: currpwd)
-
-        String newpassword = "dummy"
+        User user = new User(password: pwd)
+        user.metaClass.encyryptPassword { String string -> "abc" }
 
         and:
-
         def mockedEmailService = Mock(EmailService)
-
         user.emailService = mockedEmailService
-
         1 * mockedEmailService.sendCancellationEmail(_ as User, _ as String)
 
         when:
-
-        String newpwd = user.resetPasswordAndSendEmail()
+        user.resetPasswordAndSendEmail()
 
         then:
-
-        newpwd == user.encyryptPassword(newpassword)
+        user.password == "abc"
 
         where:
-
-        currpwd = "mypassword"
+        pwd = "saksham7171"
 
     }
 
     def "encrypt supplied password"() {
 
         given: "a user"
-
         User user = new User(password: currpwd)
 
         and:
-
         def mockedEncrypterService = Mock(PasswordEncrypterService)
-
         user.passwordEncrypterService = mockedEncrypterService
 
         and: "stub encrypt method"
-
-        mockedEncrypterService.encrypt(currpwd) >> "abc"
+        mockedEncrypterService.encrypt(currpwd) >> { result }
 
         when:
-
         String encryptedpassword = user.encyryptPassword(currpwd)
 
         then:
-
-        encryptedpassword == "abc"
+        encryptedpassword == result
 
         where:
+        currpwd       | result
+        "mskld"       | null
+        "saksham7171" | "abc"
 
-        currpwd = "mypassword"
 
     }
+
     def "group according to incomes"() {
 
         given: "a user"
-
         User user = new User(incomePerMonth: i)
 
         when:
-
         String group = user.getIncomeGroup()
 
         then:
-
         group == result
 
         where:
-
-        i | result
-
-        4000 | "MiddleClass"
-
-//        8000 | "Lower MiddleClass"
-
+        i     | result
+        4000  | "MiddleClass"
+        8000  | "Lower MiddleClass"
         11000 | "Higher MiddleClass"
 
     }
@@ -132,51 +122,41 @@ class UserSpec extends Specification {
 
     {
 
-        given:"a user"
+        given: "a user"
+        User user = new User();
 
-        User user=new User();
+        and: " a list of products"
+        user.purchasedProducts = []
 
-        and:" a list of products"
-
-        user.purchasedProducts=[]
-
-        and:"a product to be added"
-
-        Product p=new Product(name:"handbag")
+        and: "a product to be added"
+        Product p = new Product(name: "handbag")
 
         when:
-
-        user.purchasedProducts.add(p)
+        user.purchase(p)
 
         then:
-
-        user.purchasedProducts.contains(p)==true
+        user.purchasedProducts.contains(p) == true
 
     }
 
-    def"removing a product from the list of purchased products"()
+    def "removing a product from the list of purchased products"()
 
     {
 
-        given:"a user"
+        given: "a user"
+        User user = new User();
 
-        User user=new User();
+        and: " a list of products"
+        user.purchasedProducts = []
 
-        and:" a list of products"
-
-        user.purchasedProducts=[]
-
-        and:"a product to be removed"
-
-        Product p=new Product(name:"handbag")
+        and: "a product to be removed"
+        Product p = new Product(name: "handbag")
 
         when:
-
-        user.purchasedProducts.remove(p)
+        user.cancelPurchase(p)
 
         then:
-
-        user.purchasedProducts.contains(p)==false
+        user.purchasedProducts.contains(p) == false
 
     }
 
